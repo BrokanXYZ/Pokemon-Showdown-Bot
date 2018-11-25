@@ -27,36 +27,46 @@ def acceptChallenge(driver):
 	driver.find_element_by_name('acceptChallenge').click()
 
 def selectRandomMove(driver):
-	moveIsDisabled = True 
+	moveSelected = False 
 	
 	# Pick a move
-	while moveIsDisabled:
+	while not moveSelected:
 		# Pick random move
 		moveChoice = random.randint(1, 4)
 		selectedMove = driver.find_element_by_xpath('/html[1]/body[1]/div[4]/div[5]/div[1]/div[2]/div[2]/button[' + str(moveChoice) + ']')
+		is_disabled = selectedMove.get_attribute("disabled")
+		
 		# If the move is not disabled, then click it
-		if selectedMove.get_attribute('disabled') != 'disabled':
-			moveIsDisabled = False;
+		if is_disabled is None:
+			moveSelected = True;
 			selectedMove.click()
+			
 	
-def checkForDeadPokemon(driver, battleURL):
+def checkForDeadPokemon(driver):
 	try:
-		driver.find_element_by_xpath("/html/body/div[@id=\'room-" + battleURL + "\']/div[@class=\'battle-controls\']/div[@class=\'controls\']/div[@class=\'movecontrols\']/div[@class=\'moveselect\']")
+		# Check if move controls is visible
+		element = driver.find_element_by_xpath('/html[1]/body[1]/div[4]/div[5]/div[1]/div[2]/div[2]/button[1]')
 	except NoSuchElementException:
-		print("Pokemon is dead")
+		print("A pokemon died. Shutting Down.")
+		""""
 		pokemonIsDead = True 
 		# Pick a pokemon
 		while pokemonIsDead:
 			# Pick random pokemon
 			choice = random.randint(1, 6)
-			# WAIT EXPLICITLY HERE
-			sleep(5)
-			selectedPokemon = driver.find_element_by_xpath('/html/body/div[@id=\'room-' + battleURL + '\']/div[@class=\'battle-controls\']/div[@class=\'controls switch-controls\']/div[@class=\'switchcontrols\']/div[@class=\'switchmenu\']/button[' + str(choice) + ']')
-			# If the pokemon is not dead, then click it
-			if selectedPokemon.get_attribute('disabled') != 'disabled':
-				print("Selecting new pokemon")
-				pokemonIsDead = False;
-				selectedPokemon.click()
+			# Wait for pokemon switch div
+			try:
+				element = WebDriverWait(driver, 30).until(
+					EC.presence_of_element_located((By.XPATH, '/html[1]/body[1]/div[5]/div[5]/div[1]/div[3]/div[2]/button[' + choice +']'))
+				)
+			finally:
+				selectedPokemon = driver.find_element_by_xpath('/html[1]/body[1]/div[5]/div[5]/div[1]/div[3]/div[2]/button[' + choice +']')
+				# If the pokemon is not dead, then click it
+				if selectedPokemon.get_attribute('disabled') != 'disabled':
+					print("Selecting new pokemon...")
+					pokemonIsDead = False;
+					selectedPokemon.click()
+		"""
 		return True
 	return False
 		
@@ -79,8 +89,8 @@ driverTwo = webdriver.Chrome(chrome_options=chrome_options)
 driverOne.set_window_position(0,0)
 driverTwo.set_window_position(950,0)
 
-driverOne.implicitly_wait(2)
-driverTwo.implicitly_wait(2)
+driverOne.implicitly_wait(10)
+driverTwo.implicitly_wait(10)
 
 driverOne.get('https://play.pokemonshowdown.com/')
 driverTwo.get('https://play.pokemonshowdown.com/')
@@ -99,34 +109,26 @@ acceptChallenge(driverTwo)
 
 sleep(1)
 
-# Get room number 
-currentURL = driverOne.current_url
-splitURL = currentURL.split('/')
-battleURL = splitURL[3]
-print('\n\n' + battleURL + '\n\n')
+aPokemonDied = False
 
 while True:
-	aPokemonDied = False
-
+	
 	driverOne.find_element_by_name('goToEnd').click()
 	driverTwo.find_element_by_name('goToEnd').click()
 	
-	aPokemonDied = checkForDeadPokemon(driverOne, battleURL)
-	aPokemonDied = checkForDeadPokemon(driverTwo, battleURL)
+	#aPokemonDied = checkForDeadPokemon(driverOne)
+	#aPokemonDied = checkForDeadPokemon(driverTwo)
 	
-	if not aPokemonDied:
-		selectRandomMove(driverOne)
-		selectRandomMove(driverTwo)
-	else:
-		sleep(5)
+	selectRandomMove(driverOne)
+	selectRandomMove(driverTwo)
 	
 	
 	
 
-#sleep(5)
+sleep(10)
 
-#driverOne.quit()
-#driverTwo.quit()
+driverOne.quit()
+driverTwo.quit()
 
 
 
