@@ -1,1 +1,3 @@
 Pokemon-Showdown-Bot
+
+Currently not functional and suspended until I regain interest...
